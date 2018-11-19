@@ -20,13 +20,13 @@ Create, annotate, and push the manifest. The resulting version is the manifest's
 
 #### Parameters
 
-An array of:
+* `manifests`: an array of:
 
-* `arch`: architecture
+    * `arch`: architecture
 
-* `os`: operating system
+    * `os`: operating system
 
-* `tag_file`: a tag file
+    * `tag_file`: a tag file
 
 ## Example
 
@@ -51,7 +51,8 @@ jobs:
   plan:
   - put: image-manifest
       params:
-      - arch: amd64
-        os: linux
-        tag_file: build/tag
+        manifests:
+        - arch: amd64
+          os: linux
+          tag_file: build/tag
 ```

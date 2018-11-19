@@ -13,7 +13,7 @@ import (
 
 type Request struct {
 	Source *Source `json:"source"`
-	Params []Param `json:"params"`
+	Params *Params `json:"params"`
 }
 
 type Source struct {
@@ -23,7 +23,11 @@ type Source struct {
 	Password   string `json:"password"`
 }
 
-type Param struct {
+type Params struct {
+	Manifests []Manifest `json:"manifests"`
+}
+
+type Manifest struct {
 	Arch    string `json:"arch"`
 	OS      string `json:"os"`
 	TagFile string `json:"tag_file"`
@@ -43,17 +47,17 @@ func main() {
 	manifestList := request.Source.Repository + ":" + request.Source.Tag
 	var manifests []string
 	var annotations []manifest.Annotation
-	for _, param := range request.Params {
-		tag, err := readTag(param.TagFile)
+	for _, m := range request.Params.Manifests {
+		tag, err := readTag(m.TagFile)
 		if err != nil {
 			log.Fatalf("cannot read tag: %v", err)
 		}
-		m := request.Source.Repository + ":" + tag
-		manifests = append(manifests, m)
+		ref := request.Source.Repository + ":" + tag
+		manifests = append(manifests, ref)
 		annotations = append(annotations, manifest.Annotation{
-			Manifest:     m,
-			Architecture: param.Arch,
-			OS:           param.OS,
+			Manifest:     ref,
+			Architecture: m.Arch,
+			OS:           m.OS,
 		})
 	}
 	if err := manifest.Create(manifestList, manifests); err != nil {
