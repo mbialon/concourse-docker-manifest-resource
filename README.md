@@ -1,0 +1,1 @@
+# concourse-docker-manifest-resource
