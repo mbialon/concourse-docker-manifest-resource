@@ -5,8 +5,11 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
+
+	"github.com/mbialon/concourse-docker-manifest-resource/pkg/docker"
+
+	"github.com/mbialon/concourse-docker-manifest-resource/pkg/docker/manifest"
 )
 
 type Request struct {
@@ -39,19 +42,28 @@ func main() {
 	if err != nil {
 		log.Fatalf("cannot read tag file: %v", err)
 	}
-	tag := string(b)
-	manifest := strings.TrimSpace(request.Source.Repository) + ":" + strings.TrimSpace(tag)
-	manifestList := strings.TrimSpace(request.Source.Repository) + ":" + strings.TrimSpace(request.Source.Tag)
-	if err := dockerLogin(request.Source); err != nil {
+	if err := docker.Login(request.Source.Username, request.Source.Password); err != nil {
 		log.Fatalf("cannot login to docker hub: %v", err)
 	}
-	if err := createManifest(manifestList, manifest); err != nil {
+	tag := strings.TrimSpace(string(b))
+	manifestList := request.Source.Repository + ":" + request.Source.Tag
+	manifests := []string{
+		request.Source.Repository + ":" + tag,
+	}
+	if err := manifest.Create(manifestList, manifests); err != nil {
 		log.Fatalf("cannot create manifest: %v", err)
 	}
-	if err := annotateManifest(manifestList, manifest, request.Params); err != nil {
+	annotations := []manifest.Annotation{
+		{
+			Manifest:     request.Source.Repository + ":" + tag,
+			Architecture: request.Params.Arch,
+			OS:           request.Params.OS,
+		},
+	}
+	if err := manifest.Annotate(manifestList, annotations); err != nil {
 		log.Fatalf("cannot annotate manifest: %v", err)
 	}
-	digest, err := pushManifest(manifestList)
+	digest, err := manifest.Push(manifestList)
 	if err != nil {
 		log.Fatalf("cannot push manifest: %v", err)
 	}
@@ -60,45 +72,7 @@ func main() {
 			"digest": digest,
 		},
 	}
-	enc := json.NewEncoder(os.Stdout)
-	if err := enc.Encode(output); err != nil {
+	if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
 		log.Fatalf("cannot encode output: %v", err)
 	}
-}
-
-func dockerLogin(source *Source) error {
-	cmd := exec.Command("docker", "login", "-u", source.Username, "-p", source.Password)
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func createManifest(manifestList, manifest string) error {
-	cmd := exec.Command("docker", "manifest", "create", "--amend", manifestList, manifest)
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func annotateManifest(manifestList, manifest string, params *Params) error {
-	cmd := exec.Command("docker", "manifest", "annotate", "--arch", params.Arch, "--os", params.OS, manifestList, manifest)
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func pushManifest(manifestList string) (string, error) {
-	cmd := exec.Command("docker", "manifest", "push", manifestList)
-	cmd.Stderr = os.Stderr
-	b, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(b)), nil
 }
