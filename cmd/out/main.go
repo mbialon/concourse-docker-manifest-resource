@@ -8,13 +8,12 @@ import (
 	"strings"
 
 	"github.com/mbialon/concourse-docker-manifest-resource/pkg/docker"
-
 	"github.com/mbialon/concourse-docker-manifest-resource/pkg/docker/manifest"
 )
 
 type Request struct {
 	Source *Source `json:"source"`
-	Params *Params `json:"params"`
+	Params []Param `json:"params"`
 }
 
 type Source struct {
@@ -24,7 +23,7 @@ type Source struct {
 	Password   string `json:"password"`
 }
 
-type Params struct {
+type Param struct {
 	Arch    string `json:"arch"`
 	OS      string `json:"os"`
 	TagFile string `json:"tag_file"`
@@ -38,27 +37,27 @@ func main() {
 	if err := json.NewDecoder(os.Stdin).Decode(&request); err != nil {
 		log.Fatalf("cannot decode input: %v", err)
 	}
-	b, err := ioutil.ReadFile(request.Params.TagFile)
-	if err != nil {
-		log.Fatalf("cannot read tag file: %v", err)
-	}
 	if err := docker.Login(request.Source.Username, request.Source.Password); err != nil {
 		log.Fatalf("cannot login to docker hub: %v", err)
 	}
-	tag := strings.TrimSpace(string(b))
 	manifestList := request.Source.Repository + ":" + request.Source.Tag
-	manifests := []string{
-		request.Source.Repository + ":" + tag,
+	var manifests []string
+	var annotations []manifest.Annotation
+	for _, param := range request.Params {
+		tag, err := readTag(param.TagFile)
+		if err != nil {
+			log.Fatalf("cannot read tag: %v", err)
+		}
+		m := request.Source.Repository + ":" + tag
+		manifests = append(manifests, m)
+		annotations = append(annotations, manifest.Annotation{
+			Manifest:     m,
+			Architecture: param.Arch,
+			OS:           param.OS,
+		})
 	}
 	if err := manifest.Create(manifestList, manifests); err != nil {
 		log.Fatalf("cannot create manifest: %v", err)
-	}
-	annotations := []manifest.Annotation{
-		{
-			Manifest:     request.Source.Repository + ":" + tag,
-			Architecture: request.Params.Arch,
-			OS:           request.Params.OS,
-		},
 	}
 	if err := manifest.Annotate(manifestList, annotations); err != nil {
 		log.Fatalf("cannot annotate manifest: %v", err)
@@ -75,4 +74,12 @@ func main() {
 	if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
 		log.Fatalf("cannot encode output: %v", err)
 	}
+}
+
+func readTag(filename string) (string, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Fatalf("cannot read tag file: %v", err)
+	}
+	return strings.TrimSpace(string(b)), nil
 }
