@@ -1,7 +1,6 @@
 # Concourse Docker Manifest Resource
 
-[![Travis CI](https://img.shields.io/travis/mbialon/concourse-docker-manifest-resource
-.svg?style=for-the-badge)](https://travis-ci.org/mbialon/concourse-docker-manifest-resource)
+[![Travis CI](https://img.shields.io/travis/mbialon/concourse-docker-manifest-resource.svg?style=for-the-badge)](https://travis-ci.org/mbialon/concourse-docker-manifest-resource)
 
 Creates [Docker](https://docker.io/) manifests.
 
