@@ -26,7 +26,6 @@ func Annotate(manifestList string, annotations []Annotation) error {
 		if err := cmd.Run(); err != nil {
 			return err
 		}
-		return nil
 	}
 	return nil
 }
