@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -41,10 +42,12 @@ func main() {
 	if err := json.NewDecoder(os.Stdin).Decode(&request); err != nil {
 		log.Fatalf("cannot decode input: %v", err)
 	}
+	fmt.Fprintf(os.Stderr, "source, repository: %s, tag: %s\n", request.Source.Repository, request.Source.Tag)
 	if err := docker.Login(request.Source.Username, request.Source.Password); err != nil {
 		log.Fatalf("cannot login to docker hub: %v", err)
 	}
 	manifestList := request.Source.Repository + ":" + request.Source.Tag
+	fmt.Fprintf(os.Stderr, "manifest list: %s\n", manifestList)
 	var manifests []string
 	var annotations []manifest.Annotation
 	for _, m := range request.Params.Manifests {
@@ -53,6 +56,7 @@ func main() {
 			log.Fatalf("cannot read tag: %v", err)
 		}
 		ref := request.Source.Repository + ":" + tag
+		fmt.Fprintf(os.Stderr, "manifest, ref: %s, arch: %s, os: %s\n", ref, m.Arch, m.OS)
 		manifests = append(manifests, ref)
 		annotations = append(annotations, manifest.Annotation{
 			Manifest:     ref,
@@ -60,16 +64,20 @@ func main() {
 			OS:           m.OS,
 		})
 	}
+	fmt.Fprintln(os.Stderr, "create manifest")
 	if err := manifest.Create(manifestList, manifests); err != nil {
 		log.Fatalf("cannot create manifest: %v", err)
 	}
+	fmt.Fprintln(os.Stderr, "annotate manifest")
 	if err := manifest.Annotate(manifestList, annotations); err != nil {
 		log.Fatalf("cannot annotate manifest: %v", err)
 	}
+	fmt.Fprintln(os.Stderr, "push manifest")
 	digest, err := manifest.Push(manifestList)
 	if err != nil {
 		log.Fatalf("cannot push manifest: %v", err)
 	}
+	fmt.Fprintf(os.Stderr, "digest: %s\n", digest)
 	output := map[string]interface{}{
 		"version": map[string]string{
 			"digest": digest,
