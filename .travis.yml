@@ -2,6 +2,9 @@ sudo: required
 
 language: go
 
+go:
+  - "1.11.x"
+
 services:
   - docker
 
@@ -9,7 +12,9 @@ before_script:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 script:
+  - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
   - docker build -t mbialon/concourse-docker-manifest-resource .
 
 after_success:
+  - bash <(curl -s https://codecov.io/bash)
   - docker push mbialon/concourse-docker-manifest-resource
