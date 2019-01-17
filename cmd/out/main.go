@@ -19,12 +19,12 @@ type Request struct {
 
 type Source struct {
 	Repository string `json:"repository"`
-	Tag        string `json:"tag"`
 	Username   string `json:"username"`
 	Password   string `json:"password"`
 }
 
 type Params struct {
+	TagFile   string     `json:"tag_file"`
 	Manifests []Manifest `json:"manifests"`
 }
 
@@ -42,11 +42,15 @@ func main() {
 	if err := json.NewDecoder(os.Stdin).Decode(&request); err != nil {
 		log.Fatalf("cannot decode input: %v", err)
 	}
-	fmt.Fprintf(os.Stderr, "source, repository: %s, tag: %s\n", request.Source.Repository, request.Source.Tag)
+	tag, err := readTag(request.Params.TagFile)
+	if err != nil {
+		log.Fatalf("cannot read tag: %v", err)
+	}
+	fmt.Fprintf(os.Stderr, "source, repository: %s, tag: %s\n", request.Source.Repository, tag)
 	if err := docker.Login(request.Source.Username, request.Source.Password); err != nil {
 		log.Fatalf("cannot login to docker hub: %v", err)
 	}
-	manifestList := request.Source.Repository + ":" + request.Source.Tag
+	manifestList := request.Source.Repository + ":" + tag
 	fmt.Fprintf(os.Stderr, "manifest list: %s\n", manifestList)
 	var manifests []string
 	var annotations []manifest.Annotation

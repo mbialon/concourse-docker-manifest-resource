@@ -17,7 +17,6 @@ type Request struct {
 
 type Source struct {
 	Repository string `json:"repository"`
-	Tag        string `json:"tag"`
 	Username   string `json:"username"`
 	Password   string `json:"password"`
 }
@@ -34,10 +33,7 @@ func main() {
 	if err := json.NewDecoder(os.Stdin).Decode(&request); err != nil {
 		log.Fatalf("cannot decode input: %v", err)
 	}
-	manifestList := fmt.Sprintf("%s:%s@%s",
-		strings.TrimSpace(request.Source.Repository),
-		strings.TrimSpace(request.Source.Tag),
-		request.Version.Digest)
+	manifestList := fmt.Sprintf("%s@%s", strings.TrimSpace(request.Source.Repository), request.Version.Digest)
 	if err := manifest.Inspect(manifestList); err != nil {
 		log.Fatalf("cannot inspect manifest: %v", err)
 	}

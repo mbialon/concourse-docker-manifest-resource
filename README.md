@@ -8,8 +8,6 @@ Creates [Docker](https://docker.io/) manifests.
 
 * `repository`: *Required.* The name of the repository, e.g. `mbialon/concourse-docker-manifest-resource`.
 
-* `tag`: *Required.* The tag.
-
 * `username`: The username to user when authentidcating.
 
 * `password`: The password to use when authentidcating.
@@ -21,6 +19,8 @@ Creates [Docker](https://docker.io/) manifests.
 Create, annotate, and push the manifest. The resulting version is the manifest's digest.
 
 #### Parameters
+
+* `tag_file`: manifest tag file
 
 * `manifests`: an array of:
 
@@ -44,7 +44,6 @@ resources:
   type: docker-manifest
   source:
     repository: mbialon/image
-    tag: latest
     username: ((docker.username))
     password: ((docker.password))
 
@@ -53,6 +52,7 @@ jobs:
   plan:
   - put: image-manifest
       params:
+        tag_file: version/version
         manifests:
         - arch: amd64
           os: linux
