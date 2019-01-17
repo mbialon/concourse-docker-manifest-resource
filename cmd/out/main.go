@@ -19,6 +19,7 @@ type Request struct {
 
 type Source struct {
 	Repository string `json:"repository"`
+	Tag        string `json:"tag"`
 	Username   string `json:"username"`
 	Password   string `json:"password"`
 }
@@ -42,9 +43,13 @@ func main() {
 	if err := json.NewDecoder(os.Stdin).Decode(&request); err != nil {
 		log.Fatalf("cannot decode input: %v", err)
 	}
-	tag, err := readTag(request.Params.TagFile)
-	if err != nil {
-		log.Fatalf("cannot read tag: %v", err)
+	tag := request.Source.Tag
+	if request.Params.TagFile != "" {
+		var err error
+		tag, err = readTag(request.Params.TagFile)
+		if err != nil {
+			log.Fatalf("cannot read tag: %v", err)
+		}
 	}
 	fmt.Fprintf(os.Stderr, "source, repository: %s, tag: %s\n", request.Source.Repository, tag)
 	if err := docker.Login(request.Source.Username, request.Source.Password); err != nil {

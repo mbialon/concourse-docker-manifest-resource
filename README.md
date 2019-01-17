@@ -8,6 +8,8 @@ Creates [Docker](https://docker.io/) manifests.
 
 * `repository`: *Required.* The name of the repository, e.g. `mbialon/concourse-docker-manifest-resource`.
 
+* `tag`: The tag. Can be overwritten by the tag file.
+
 * `username`: The username to user when authentidcating.
 
 * `password`: The password to use when authentidcating.
