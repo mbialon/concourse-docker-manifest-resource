@@ -32,6 +32,8 @@ Create, annotate, and push the manifest. The resulting version is the manifest's
 
     * `tag_file`: a tag file
 
+    * `digest_file`: a tag file (alternate to `tag_file`, useful to reference a `docker-image-resource` `digest` file)
+
 ## Example
 
 ```yaml
@@ -59,4 +61,19 @@ jobs:
         - arch: amd64
           os: linux
           tag_file: build/tag
+
+- name: build manifest from existing image
+  plan:
+  - get: some-image-amd64
+  - get: some-image-arm64
+  - put: image-manifest
+      params:
+        tag_file: version/version
+        manifests:
+        - arch: amd64
+          os: linux
+          digest_file: some-image-amd64/digest
+        - arch: arm64
+          os: linux
+          digest_file: some-image-arm64/digest
 ```
