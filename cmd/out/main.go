@@ -30,9 +30,10 @@ type Params struct {
 }
 
 type Manifest struct {
-	Arch    string `json:"arch"`
-	OS      string `json:"os"`
-	TagFile string `json:"tag_file"`
+	Arch       string `json:"arch"`
+	OS         string `json:"os"`
+	TagFile    string `json:"tag_file"`
+	DigestFile string `json:"digest_file"`
 }
 
 func main() {
@@ -59,12 +60,21 @@ func main() {
 	fmt.Fprintf(os.Stderr, "manifest list: %s\n", manifestList)
 	var manifests []string
 	var annotations []manifest.Annotation
+	var ref string
 	for _, m := range request.Params.Manifests {
-		tag, err := readTag(m.TagFile)
-		if err != nil {
-			log.Fatalf("cannot read tag: %v", err)
+		if len(m.DigestFile) > 0 {
+			digest, err := readTag(m.DigestFile)
+			if err != nil {
+				log.Fatalf("cannot read tag: %v", err)
+			}
+			ref = request.Source.Repository + "@" + digest
+		} else {
+			tag, err := readTag(m.TagFile)
+			if err != nil {
+				log.Fatalf("cannot read tag: %v", err)
+			}
+			ref = request.Source.Repository + ":" + tag
 		}
-		ref := request.Source.Repository + ":" + tag
 		fmt.Fprintf(os.Stderr, "manifest, ref: %s, arch: %s, os: %s\n", ref, m.Arch, m.OS)
 		manifests = append(manifests, ref)
 		annotations = append(annotations, manifest.Annotation{
