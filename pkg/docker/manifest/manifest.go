@@ -10,6 +10,7 @@ type Annotation struct {
 	Manifest     string
 	Architecture string
 	OS           string
+	Variant      string
 }
 
 func Create(manifestList string, manifests []string) error {
@@ -21,7 +22,11 @@ func Create(manifestList string, manifests []string) error {
 
 func Annotate(manifestList string, annotations []Annotation) error {
 	for _, a := range annotations {
-		cmd := exec.Command("docker", "manifest", "annotate", "--arch", a.Architecture, "--os", a.OS, manifestList, a.Manifest)
+		arg := []string{"manifest", "annotate", manifestList, a.Manifest, "--arch", a.Architecture, "--os", a.OS}
+		if a.Variant != "" {
+			arg = append(arg, "--variant", a.Variant)
+		}
+		cmd := exec.Command("docker", arg...)
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
 			return err

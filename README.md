@@ -28,6 +28,8 @@ Create, annotate, and push the manifest. The resulting version is the manifest's
 
     * `arch`: architecture
 
+    * `variant`: optional architecture variant, e.g. `arch: arm, variant: v7`
+
     * `os`: operating system
 
     * `tag_file`: a tag file
@@ -76,4 +78,8 @@ jobs:
         - arch: arm64
           os: linux
           digest_file: some-image-arm64/digest
+        - arch: arm
+          variant: v7
+          os: linux
+          digest_file: some-image-armhf/digest
 ```

@@ -32,6 +32,7 @@ type Params struct {
 type Manifest struct {
 	Arch       string `json:"arch"`
 	OS         string `json:"os"`
+	Variant    string `json:"variant"`
 	TagFile    string `json:"tag_file"`
 	DigestFile string `json:"digest_file"`
 }
@@ -75,13 +76,15 @@ func main() {
 			}
 			ref = request.Source.Repository + ":" + tag
 		}
-		fmt.Fprintf(os.Stderr, "manifest, ref: %s, arch: %s, os: %s\n", ref, m.Arch, m.OS)
-		manifests = append(manifests, ref)
-		annotations = append(annotations, manifest.Annotation{
+		annotation := manifest.Annotation{
 			Manifest:     ref,
 			Architecture: m.Arch,
 			OS:           m.OS,
-		})
+			Variant:      m.Variant,
+		}
+		fmt.Fprintf(os.Stderr, "manifest, %#v\n", annotation)
+		manifests = append(manifests, ref)
+		annotations = append(annotations, annotation)
 	}
 	fmt.Fprintln(os.Stderr, "create manifest")
 	if err := manifest.Create(manifestList, manifests); err != nil {
