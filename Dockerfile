@@ -1,4 +1,4 @@
-FROM golang:1.11 AS build
+FROM golang:1.13 AS build
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 COPY ./ /src
 WORKDIR /src
