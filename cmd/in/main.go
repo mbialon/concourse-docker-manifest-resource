@@ -43,4 +43,12 @@ func main() {
 	if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
 		log.Fatalf("cannot encode output: %v", err)
 	}
+	file, err := os.Create("digest")
+	if err != nil {
+		log.Fatalf("cannot create digest file: %v", err)
+	}
+	defer func() { _ = file.Close() }()
+	if _, err := fmt.Fprintln(file, request.Version.Digest); err != nil {
+		log.Fatalf("cannot write digest: %v", err)
+	}
 }
